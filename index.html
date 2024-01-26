@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trash Hauling Cost Calculator</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <h1>Trash Hauling Cost Calculator</h1>
+    <div class="container">
+        <div class="form-section">
+            <form id="haulingCostForm">
+                <label for="haulsPerWeek">Hauls Per Week (without SMT):</label>
+                <input type="number" id="haulsPerWeek" name="haulsPerWeek" min="0"><br><br>
+        
+                <label for="transferStation">Does the Hauler use a Transfer Station?</label>
+                <input type="checkbox" id="transferStation" name="transferStation"><br><br>
+        
+                <div id="transferStationDistanceContainer" style="display: none;">
+                    <label for="transferStationDistance">Transfer Station Distance (in miles):</label>
+                    <input type="number" id="transferStationDistance" name="transferStationDistance" min="0" step="0.1">
+                    <br><br>
+                </div>
+        
+                <label for="compactibility">Compactibility:</label>
+                <select id="compactibility" name="compactibility">
+                    <option value="high">High</option>
+                    <option value="medium">Medium</option>
+                    <option value="low">Low</option>
+                </select><br><br>
+        
+                <label for="haulCost">Haul Cost ($):</label>
+                <input type="number" id="haulCost" name="haulCost" min="0" step="0.01">
+                <br><br>
+                
+                <label for="haulerDistance">Distance to the Hauler (in miles):</label>
+                <input type="number" id="haulerDistance" name="haulerDistance" min="0" step="0.1">
+                <br><br>  
+        
+                <label for="landfillDistance">Distance to the Landfill (in miles):</label>
+                <input type="number" id="landfillDistance" name="landfillDistance" min="0" step="0.1">
+                <br><br>        
+        
+                <button id="submitButton" type="submit">Calculate</button>
+            </form>
+        </div>
+
+        <div class="visualization-section">       
+                <!-- Icons represented as circles for simplicity -->
+                <i class="fas fa-truck" id="hauler-icon" style="position: absolute; top: 25%; left: 35%; transform: translate(-50%, -50%);"></i>
+                <i class="fas fa-industry" id="smt-icon" style="position: absolute; top: 40%; left: 30%; transform: translate(-50%, -50%);"></i>
+                <i class="fas fa-dumpster" id="customer-icon" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);"></i>
+                <i class="fas fa-trash" id="landfill-icon" style="position: absolute; top: 20%; left: 60%; transform: translate(-50%, -50%);"></i>
+                <i class="fas fa-trash" id="transfer-station-icon" style="position: absolute; top: 35%; left: 70%; transform: translate(-50%, -50%);"></i>
+
+                <svg width="100%" height="400" id="visualization-map" viewBox="0 0 400 400">
+                    <!--
+                    <line id="hauler-customer-line" x1="40" y1="100" x2="200" y2="330" stroke="black" stroke-width="1"/>
+                    <line id="customer-landfill-line" x1="200" y1="330" x2="305" y2="60" stroke="black" stroke-width="1"/>
+                    <line id="customer-transfer-line" x1="200" y1="330" x2="410" y2="200" stroke="black" stroke-width="1"/>
+                    <line id="smt-customer-line" x1="-10" y1="245" x2="200" y2="335" stroke="black" stroke-width="1"/>
+                -->
+
+                </svg>        
+                <button id="animateButton">Test Animation</button>
+        </div>
+
+        <div class="emissions-section">
+
+            <div id="emissionsWithoutSmt">
+                <h3>Estimated Emissions Without SMT:</h3>
+                <p id="emissionsValueWithoutSmt">0 kg CO2</p>
+            </div>
+            
+            <div id="emissionsWithSmt">
+                <h3>Estimated Emissions With SMT:</h3>
+                <p id="emissionsValueWithSmt">0 kg CO2</p>
+            </div>
+
+        </div>
+        
+          
+    <script src="script.js"></script>
+</body>
+</html>
