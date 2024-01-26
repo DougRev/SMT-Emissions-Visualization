@@ -67,6 +67,7 @@ let yearlyHauls = haulsPerWeek * 52;
 let landfillDist = landfillDistance;
 let haulerDist = haulerDistance;
 let transferStationDist = transferStationDistance;
+let haulingCost = haulCost;
 
 // Function to calculate running emissions
 function calculateRunningEmissions(haulsPerWeek, distance, emissionFactor) {
@@ -155,18 +156,17 @@ function animateHauler() {
 
 
 document.addEventListener("DOMContentLoaded", function () {
-  document
-    .getElementById("transferStation")
-    .addEventListener("change", function () {
-      // Toggle the visibility of Transfer Station Distance input
-      var transferStationChecked = this.checked;
-      var distanceContainer = document.getElementById(
-        "transferStationDistanceContainer"
-      );
-      distanceContainer.style.display = transferStationChecked
-        ? "block"
-        : "none";
-    });
+  document.getElementById('transferStation').addEventListener('change', function() {
+    var transferStationChecked = this.checked;
+    var transferStationDistanceContainer = document.getElementById('transferStationDistanceContainer');
+    var landfillDistanceField = document.getElementById('landfillDistance'); // Ensure this is the correct ID for your landfill distance input
+    var landfillDistanceLabel = document.querySelector('label[for="landfillDistance"]'); // Adjust if needed to select the correct label
+  
+    transferStationDistanceContainer.style.display = transferStationChecked ? 'block' : 'none';
+    landfillDistanceField.style.display = landfillDistanceLabel.style.display = transferStationChecked ? 'none' : 'block';
+  });
+  
+
   document
     .getElementById("haulingCostForm")
     .addEventListener("submit", function (event) {
@@ -182,7 +182,6 @@ document.addEventListener("DOMContentLoaded", function () {
       );
       var transferStation = document.getElementById("transferStation").checked;
       var compactibility = document.getElementById("compactibility").value;
-      var haulCost = document.getElementById("haulCost").value;
       var landfillDistance = parseFloat(
         document.getElementById("landfillDistance").value
       );
@@ -217,45 +216,65 @@ document.addEventListener("DOMContentLoaded", function () {
 
       let emissionsElement = document.getElementById("emissionsValueWithoutSmt");
       emissionsElement.textContent = "0 lbs/week CO2";
-      
+      let haulingCostElement = document.getElementById('haulingCostValue');
+      haulingCostElement.textContent = "$0.00";
+
       // Get form values
       let haulsPerWeek =
         parseFloat(document.getElementById("haulsPerWeek").value) || 0;
       let landfillDistance =
         parseFloat(document.getElementById("landfillDistance").value) || 0;
       let haulerDistance = parseFloat(
-        document.getElementById("haulerDistance").value || 0
-      );
+        document.getElementById("haulerDistance").value) || 0;
 
-      // Trigger animations based on the number of hauls per week
+      let haulCost = parseFloat(document.getElementById('haulCost').value) || 0; // Replace 'haulCostInputId' with the correct ID of your input field
+
+      let transferStationChecked = document.getElementById('transferStation').checked;
+      let transferStationDistance = parseFloat(document.getElementById('transferStationDistance').value || 0);
+
+
       for (let i = 0; i < haulsPerWeek; i++) {
-        // Calculate a staggered delay for each dot, ensuring each dot has enough time to complete the path
-        const duration = 2000;
-        let delay = i * (duration + 500); // Adding an extra half-second between each dot's start time
+        let delay = i * (2000 + 500);
 
+      // Hauler to Customer Path
+      setTimeout(() => {
+        animatePath(40, 100, 200, 330, 'red', 2000, 'haulerToCustomer', function() {
+          let pathEmissions = calculatePathEmissions(haulerDistance, Emissions.RunningCO2, false);
+          incrementEmissionsForPath(pathEmissions);
+        });
+      }, delay);
+
+      // Choose between Customer to Landfill or Customer to Transfer Station
+      if (transferStationChecked) {
         setTimeout(() => {
-          animatePath(
-            40,
-            100,
-            200,
-            330,
-            "red",
-            2000,
-            "haulerToCustomer",
-            function () {
-              // This is the callback that gets called when the dot animation is complete.
-              // You would calculate the emissions for the haul here.
-              let pathEmissions = calculatePathEmissions(
-                haulerDistance,
-                Emissions.RunningCO2,
-                false
-              );
-              incrementEmissionsForPath(pathEmissions);
-            }
-          );
-        }, delay);
+          animatePath(200, 330, 410, 200, 'orange', 2000, 'customerToTransferStation', function() {
+            let pathEmissions = calculatePathEmissions(transferStationDistance, Emissions.RunningCO2, false);
+            incrementEmissionsForPath(pathEmissions);
+            updateHaulingCost(haulCost);
+
+            animatePath(410, 200, 200, 330, 'orange', 2000, 'transferStationToCustomer', function() {
+              let returnPathEmissions = calculatePathEmissions(transferStationDistance, Emissions.RunningCO2, false);
+              incrementEmissionsForPath(returnPathEmissions);
+            });
+          });
+        }, delay + 2000);
+      } else {
+        setTimeout(() => {
+          animatePath(200, 330, 305, 60, 'blue', 2000, 'customerToLandfill', function() {
+            let pathEmissions = calculatePathEmissions(landfillDistance, Emissions.RunningCO2, false);
+            incrementEmissionsForPath(pathEmissions);
+            // Update the hauling cost
+            updateHaulingCost(haulCost);
+        
+            animatePath(305, 60, 200, 330, 'blue', 2000, 'landfillToCustomer', function() {
+              let returnPathEmissions = calculatePathEmissions(landfillDistance, Emissions.RunningCO2, false);
+              incrementEmissionsForPath(returnPathEmissions);
+            });
+          });
+        }, delay + 2000);
       }
-    });
+    }
+  });
 
   // Function to animate paths
   function animatePath(startX, startY, endX, endY, color, duration, pathType, onComplete) {
@@ -292,7 +311,12 @@ document.addEventListener("DOMContentLoaded", function () {
     document.getElementById('emissionsValueWithoutSmt').textContent = newEmissions.toFixed(2) + ' lbs/week CO2';
   }
 
-
+  function updateHaulingCost(haulCost) {
+    let currentHaulingCost = parseFloat(document.getElementById('haulingCostValue').textContent.replace('$', '')) || 0;
+    let newHaulingCost = currentHaulingCost + haulCost;
+    document.getElementById('haulingCostValue').textContent = `$${newHaulingCost.toFixed(2)}`;
+  }
+  
   // Function to create an SVG dot
   function createDot(x, y, color) {
     let dot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
