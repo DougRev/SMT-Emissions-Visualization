@@ -15,15 +15,6 @@
                 <label for="haulsPerWeek">Hauls Per Week (without SMT):</label>
                 <input type="number" id="haulsPerWeek" name="haulsPerWeek" min="0"><br><br>
         
-                <label for="transferStation">Does the Hauler use a Transfer Station?</label>
-                <input type="checkbox" id="transferStation" name="transferStation"><br><br>
-        
-                <div id="transferStationDistanceContainer" style="display: none;">
-                    <label for="transferStationDistance">Transfer Station Distance (in miles):</label>
-                    <input type="number" id="transferStationDistance" name="transferStationDistance" min="0" step="0.1">
-                    <br><br>
-                </div>
-        
                 <label for="compactibility">Compactibility:</label>
                 <select id="compactibility" name="compactibility">
                     <option value="high">High</option>
@@ -38,33 +29,48 @@
                 <label for="haulerDistance">Distance to the Hauler (in miles):</label>
                 <input type="number" id="haulerDistance" name="haulerDistance" min="0" step="0.1">
                 <br><br>  
+                
+                <label for="transferStation">Does the Hauler use a Transfer Station?</label>
+                <input type="checkbox" id="transferStation" name="transferStation"><br><br>
         
+                <div id="transferStationDistanceContainer" style="display: none;">
+                    <label for="transferStationDistance">Transfer Station Distance (in miles):</label>
+                    <input type="number" id="transferStationDistance" name="transferStationDistance" min="0" step="0.1">
+                    <br><br>
+                </div>
                 <label for="landfillDistance">Distance to the Landfill (in miles):</label>
                 <input type="number" id="landfillDistance" name="landfillDistance" min="0" step="0.1">
                 <br><br>        
         
-                <button id="submitButton" type="submit">Calculate</button>
+                <!--<button id="submitButton" type="submit">Calculate</button>-->
             </form>
         </div>
 
         <div class="visualization-section">       
                 <!-- Icons represented as circles for simplicity -->
-                <i class="fas fa-truck" id="hauler-icon" style="position: absolute; top: 25%; left: 35%; transform: translate(-50%, -50%);"></i>
-                <i class="fas fa-industry" id="smt-icon" style="position: absolute; top: 40%; left: 30%; transform: translate(-50%, -50%);"></i>
-                <i class="fas fa-dumpster" id="customer-icon" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);"></i>
-                <i class="fas fa-trash" id="landfill-icon" style="position: absolute; top: 20%; left: 60%; transform: translate(-50%, -50%);"></i>
-                <i class="fas fa-trash" id="transfer-station-icon" style="position: absolute; top: 35%; left: 70%; transform: translate(-50%, -50%);"></i>
+                <img src="/images/hauler-icon-png.png" id="hauler-icon" style="position: absolute; top: 10%; left: 20%; transform: translate(-50%, -50%);"></i>
+                <img src="/images/SmashMyTrash.logo portrait colors (1) (1).png" class="" id="smt-icon" style="position: absolute; top: 30%; left: 15%; transform: translate(-50%, -50%);"></i>
+                <img src="/images/dumpster-color-png.png" class="" id="customer-icon" style="position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%);"></i>
+                <img src="/images/landfill (1).png" class="" id="landfill-icon" style="position: absolute; top: 10%; left: 67%; transform: translate(-50%, -50%);"></i>
+                <img src="/images/transfer.png" class="" id="transfer-station-icon" style="position: absolute; top: 25%; left: 90%; transform: translate(-50%, -50%);"></i>
 
                 <svg width="100%" height="400" id="visualization-map" viewBox="0 0 400 400">
-                    <!--
-                    <line id="hauler-customer-line" x1="40" y1="100" x2="200" y2="330" stroke="black" stroke-width="1"/>
-                    <line id="customer-landfill-line" x1="200" y1="330" x2="305" y2="60" stroke="black" stroke-width="1"/>
-                    <line id="customer-transfer-line" x1="200" y1="330" x2="410" y2="200" stroke="black" stroke-width="1"/>
-                    <line id="smt-customer-line" x1="-10" y1="245" x2="200" y2="335" stroke="black" stroke-width="1"/>
-                -->
+                    
+<!--
+                        
+                    <line id="hauler-customer-line" x1="25" y1="80" x2="200" y2="330" stroke="black" stroke-width="1"/>
+                    <line id="customer-landfill-line" x1="200" y1="330" x2="295" y2="80" stroke="black" stroke-width="1"/>
+                    <line id="customer-transfer-line" x1="200" y1="330" x2="425" y2="205" stroke="black" stroke-width="1"/>
+                    <line id="smt-customer-line" x1="-10" y1="245" x2="200" y2="330" stroke="black" stroke-width="1"/>
+               
+-->
+                </svg>
+                <div id="button-section">
+                    <button id="submitWithoutSMT">Submit Without SMT</button>
+                    <button id="submitWithSMT" disabled>Submit With SMT (Coming Soon)</button>
+                </div>        
+                <div id="tooltip" style="position: absolute; display: none; pointer-events: none; background-color: white; border: 1px solid black; padding: 5px; border-radius: 5px;"></div>
 
-                </svg>        
-                <button id="animateButton">Test Animation</button>
         </div>
 
         <div class="emissions-section">
@@ -78,7 +84,7 @@
                 <h3>Estimated Emissions With SMT:</h3>
                 <p id="emissionsValueWithSmt">0 kg CO2</p>
             </div>
-            
+
             <div class="hauling-cost-section">
                 <h3>Hauling Cost:</h3>
                 <p id="haulingCostValue">$0</p>
@@ -87,6 +93,7 @@
         </div>
         
           
+        <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="script.js"></script>
 </body>
 </html>

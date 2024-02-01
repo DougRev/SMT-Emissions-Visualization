@@ -1,194 +1,313 @@
-
-body {
-    font-family: Arial, sans-serif;
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+/* Reset some basic elements */
+body,
+h1,
+h2,
+h3,
+p,
+form,
+input,
+select,
+button {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-family: "Arial", sans-serif;
 }
 
-header, footer {
-    background-color: #bb1e10;
-    color: white;
-    text-align: center;
-    padding: 10px 0;
+/* Apply a color scheme */
+body {
+  background-color: #f5f5f5;
+  color: #333;
+}
+
+/* Container styling */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+/* Typography */
+h1 {
+  font-size: 2.5em;
+  color: #007bff;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+h3 {
+  color: #333;
+  font-size: 1.5em;
+  margin-bottom: 10px;
+}
+
+p {
+  font-size: 1em;
+  margin-bottom: 10px;
+}
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+header,
+footer {
+  background-color: #bb1e10;
+  color: white;
+  text-align: center;
+  padding: 10px 0;
 }
 
 main {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    padding: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  padding: 20px;
 }
 
 #map-section {
-    flex: 1;
-    min-width: 300px;
-    height: 400px;
-    margin-right: 20px;
-    background-color: #eaeaea; /* Placeholder color for map section */
-}body {
-    font-family: Arial, sans-serif;
-    background-color: #f4f4f4;
-    padding: 20px;
-    color: #333;
+  flex: 1;
+  min-width: 300px;
+  height: 400px;
+  margin-right: 20px;
+  background-color: #eaeaea; 
 }
 
+
 h1 {
-    color: #333;
+  color: #333;
 }
 
 form {
-    background: white;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    max-width: 500px;
-    margin: 0 auto;
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  max-width: 500px;
+  margin: 0 auto;
 }
 
 label {
-    font-weight: bold;
-    display: block;
-    margin-top: 20px;
+  font-weight: bold;
+  display: block;
+  margin-top: 20px;
 }
 
 input[type="number"],
 select {
-    width: 100%;
-    padding: 10px;
-    margin-top: 5px;
-    border-radius: 4px;
-    border: 1px solid #ddd;
-    box-sizing: border-box; /* Added for box-sizing */
+  width: 100%;
+  padding: 10px;
+  margin-top: 5px;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+  box-sizing: border-box; /* Added for box-sizing */
 }
 
 input[type="checkbox"] {
-    margin-top: 10px;
+  margin-top: 10px;
 }
 
 button {
-    background-color: #5C6BC0;
-    color: white;
-    padding: 10px 15px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    margin-top: 20px;
+  background-color: #5c6bc0;
+  color: white;
+  padding: 10px 15px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 20px;
 }
 
 button:hover {
-    background-color: #3F51B5;
+  background-color: #3f51b5;
 }
 
-
 #input-section {
-    flex: 1;
-    min-width: 300px;
-    padding: 10px;
-    background-color: #f5f5f5;
-    border-radius: 5px;
+  flex: 1;
+  min-width: 300px;
+  padding: 10px;
+  background-color: #f5f5f5;
+  border-radius: 5px;
 }
 
 #results-display {
-    width: 100%;
-    margin-top: 20px;
-    padding: 10px;
-    background-color: #f9f9f9;
-    border-radius: 5px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  width: 100%;
+  margin-top: 20px;
+  padding: 10px;
+  background-color: #f9f9f9;
+  border-radius: 5px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-input, select {
-    width: 100%;
-    padding: 10px;
-    margin: 10px 0;
-    border-radius: 5px;
-    border: 1px solid #ddd;
+input,
+select {
+  width: 100%;
+  padding: 10px;
+  margin: 10px 0;
+  border-radius: 5px;
+  border: 1px solid #ddd;
 }
 
 button {
-    width: 100%;
-    padding: 10px;
-    background-color: #bb1e10;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
+  width: 100%;
+  padding: 10px;
+  background-color: #bb1e10;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
 }
 
 button:hover {
-    background-color: #a6190f;
+  background-color: #a6190f;
 }
-
 
 .location {
-    width: 50px; /* Adjust as needed */
-    height: 50px; /* Adjust as needed */
-    border-radius: 50%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-    font-size: 12px; /* Adjust as needed */
+  width: 50px; /* Adjust as needed */
+  height: 50px; /* Adjust as needed */
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  font-size: 12px; /* Adjust as needed */
 }
 
-#smt-location { background-color: blue; }
-#customer-location { background-color: green; }
-#transfer-station { background-color: orange; }
-#landfill-location { background-color: red; }
+#smt-location {
+  background-color: blue;
+}
+#customer-location {
+  background-color: green;
+}
+#transfer-station {
+  background-color: orange;
+}
+#landfill-location {
+  background-color: red;
+}
 
 #hauler-location {
-    fill: url(#haulerIcon); /* Assuming you have defined a pattern or image with this ID */
-    cursor: pointer; /* If you want it to be clickable */
-    /* Add any other styles like transition for smooth movement */
-  }
-  
+  fill: url(#haulerIcon); /* Assuming you have defined a pattern or image with this ID */
+  cursor: pointer; /* If you want it to be clickable */
+  /* Add any other styles like transition for smooth movement */
+}
 
 #visualization-box {
-    position: relative;
-    display: flex;
-    justify-content: space-around;
-    align-items: center;
-    width: 600px;
-    height: 400px;
-    border: 1px solid #000;
-    margin-top: 20px;  
+  position: relative;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  width: 600px;
+  height: 400px;
+  border: 1px solid #000;
+  margin-top: 20px;
 }
 
 #visualizationBox img {
-        position: absolute;
-        transition: all 1s ease;
+  position: absolute;
+  transition: all 1s ease;
 }
 
-
-#emissionsWithoutSmt, #emissionsWithSmt {
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    margin-top: 20px;
+#emissionsWithoutSmt,
+#emissionsWithSmt {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  margin-top: 20px;
 }
 .container {
-    display: grid;
-    grid-template-columns: 1fr 3fr 1fr;
-    gap: 20px;
-    padding: 20px;
+  display: grid;
+  grid-template-columns: 1fr 3fr 1fr;
+  gap: 20px;
+  padding: 20px;
+}
+
+.form-section {
+  grid-column: 1 / 2;
+}
+
+.visualization-section {
+  width: 100%;
+  height: auto;
+  position: relative;
+}
+
+.emissions-section {
+  grid-column: 3 / 4;
+}
+
+#visualization-map {
+  border: 1px solid #ccc;
+  background-color: #f9f9f9;
+}
+
+.icon {
+  position: absolute;
+  transform: translate(-50%, -50%);
+}
+#hauler-icon {
+  top: 25%;
+  left: 35%;
+  /* Use percentages for positioning */
+}
+@media (max-width: 600px) {
+  .icon {
+    /* Adjust size and position for smaller screens */
+    top: 30%;
+    left: 40%;
+  }
+}
+#transferStationDistanceContainer {
+  visibility: hidden; /* Hide the container but reserve the space */
+  height: 90px; /* Adjust the height based on your actual form input height */
+}
+
+#transferStation:checked ~ #transferStationDistanceContainer {
+  visibility: visible; /* Show the container */
+}
+
+
+/* Button styling */
+.button-section {
+    text-align: center;
+    margin-bottom: 20px;
   }
   
-  
-  .form-section {
-    grid-column: 1 / 2;
+  .button-section button {
+    margin: 0 10px;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    background-color: #007BFF;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    transition: background-color 0.3s ease;
   }
   
-  .visualization-section {
-    grid-column: 2 / 3;
+  .button-section button:hover {
+    background-color: #0056b3;
   }
   
-  .emissions-section {
-    grid-column: 3 / 4;
+  .button-section button:disabled {
+    background-color: #cccccc;
   }
-  
-  #visualization-map {
-    border: 1px solid #ccc;
-    background-color: #f9f9f9;
-  }
-  
+
+/* Icons */
+
+#hauler-icon {
+    width: 70px;
+}
+#customer-icon{
+    width: 70px;
+}
+#smt-icon {
+    width: 100px;
+}
+#transfer-station-icon{
+    width: 70px;
+}
+#landfill-icon{
+    width: 70px;
+}

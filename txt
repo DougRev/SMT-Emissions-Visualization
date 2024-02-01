@@ -185,27 +185,6 @@ function runHaulSequence(hauls, duration) {
 
   nextPart();
 }
-function getPathWithRightAngle(startIconId, endIconId) {
-  const startIcon = document.getElementById(startIconId);
-  const endIcon = document.getElementById(endIconId);
-
-  if (!startIcon || !endIcon) {
-    console.error(`Elements with IDs "${startIconId}" or "${endIconId}" were not found.`);
-    return '';
-  }
-
-  // Calculate the positions of the icons
-  const start = { x: startIcon.offsetLeft, y: startIcon.offsetTop };
-  const end = { x: endIcon.offsetLeft, y: endIcon.offsetTop };
-
-  // Determine the 'corner' point for the right-angle turn
-  // For simplicity, this example uses the x from the end point and y from the start point
-  const corner = { x: end.x, y: start.y };
-
-  // Create the path data string
-  const pathData = `M${start.x},${start.y} L${corner.x},${corner.y} L${end.x},${end.y}`;
-  return pathData;
-}
 
 
 document.addEventListener("DOMContentLoaded", function () {
@@ -257,8 +236,6 @@ document.addEventListener("DOMContentLoaded", function () {
   pathData.push(
     {
       id: "haulerToCustomer",
-      startIcon: "hauler-icon",
-      endIcon: "customer-icon",
       startX: haulerToCustomerPathCoordinates.startX,
       startY: haulerToCustomerPathCoordinates.startY,
       endX: haulerToCustomerPathCoordinates.endX,
@@ -269,8 +246,6 @@ document.addEventListener("DOMContentLoaded", function () {
     },
     {
       id: "customerToLandfill",
-      startIcon: "customer-icon",
-      endIcon: "landfill-icon",
       startX: customerToLandfillPathCoordinates.startX,
       startY: customerToLandfillPathCoordinates.startY,
       endX: customerToLandfillPathCoordinates.endX,
@@ -281,8 +256,6 @@ document.addEventListener("DOMContentLoaded", function () {
     },
     {
       id: "smtToCustomer",
-      startIcon: "smt-icon",
-      endIcon: "customer-icon",
       startX: smtToCustomerPathCoordinates.startX,
       startY: smtToCustomerPathCoordinates.startY,
       endX: smtToCustomerPathCoordinates.endX,
@@ -293,8 +266,6 @@ document.addEventListener("DOMContentLoaded", function () {
     },
     {
       id: "customerToTransfer",
-      startIcon: "customer-icon",
-      endIcon: "transfer-station-icon",
       startX: customerToTransferPathCoordinates.startX,
       startY: customerToTransferPathCoordinates.startY,
       endX: customerToTransferPathCoordinates.endX,
@@ -305,15 +276,13 @@ document.addEventListener("DOMContentLoaded", function () {
     },
   );
   d3.select("#visualization-map")
-  .selectAll("path")
-  .data(pathData)
-  .enter()
-  .append("path")
-  .attr("d", d => getPathWithRightAngle(d.startIcon, d.endIcon)) // Generate path with right angle
-  .attr("stroke", d => d.color)
-  .attr("fill", "none") // No fill for the paths
-  .attr("id", d => d.id);
-
+    .selectAll("path")
+    .data(pathData)
+    .enter()
+    .append("path")
+    .attr("d", (d) => `M${d.startX},${d.startY} L${d.endX},${d.endY}`)
+    .attr("stroke", (d) => d.color)
+    .attr("id", (d) => d.id);
 
   pathData.forEach((path) => {
     d3.select(`#${path.id}`)
@@ -423,7 +392,7 @@ document.addEventListener("DOMContentLoaded", function () {
     d3.select("#visualization-map")
       .selectAll("path")
       .data(pathData)
-  .attr("d", d => getPathWithRightAngle(d.startIcon, d.endIcon)) // Generate path with right angle
+      .attr("d", (d) => `M${d.startX},${d.startY} L${d.endX},${d.endY}`);
   }
   window.addEventListener("resize", updatePathData);
 
@@ -511,6 +480,7 @@ document.addEventListener("DOMContentLoaded", function () {
         parseFloat(document.getElementById("haulerDistance").value) || 0;
 
       let haulCost = parseFloat(document.getElementById("haulCost").value) || 0;
+
       let transferStationChecked =
         document.getElementById("transferStation").checked;
       let transferStationDistance = parseFloat(

@@ -1,0 +1,520 @@
+const Emissions = {
+    // Vehicle (Hauler) Running Emissions
+    RunningCO2: 1743.222553,
+    RunningCO2EQ: 1745.107042,
+  
+    // Vehicle (Hauler) Idle Emissions
+    IdleCO2: 7558.133922,
+    IdleCO2EQ: 7591.358337,
+  
+    // Smash SmashEmissions
+    SmashCO2: 9098.481403,
+    SmashCO2EQ: 9137.863419,
+  
+    // Smash Running Emissions
+    SmashRunCO2: 1714.101577,
+    SmashRunCO2EQ: 1715.763589,
+  
+    // Smash Idle Emissions
+    SmashIdleCO2: 7278.785122,
+    SmashIdleCO2EQ: 7310.290735,
+  };
+  
+  const conversionFactor = 0.002204622622;
+  const vit = 0.3;
+  
+  let yearlyHauls = haulsPerWeek * 52;
+  let landfillDist = landfillDistance;
+  let haulerDist = haulerDistance;
+  let transferStationDist = transferStationDistance;
+  let haulingCost = haulCost;
+  
+  // Define incrementEmissionsForPath in the global scope
+  function incrementEmissionsForPath(pathEmissions) {
+    let currentEmissions = parseFloat(document.getElementById('emissionsValueWithoutSmt').textContent) || 0;
+    let newEmissions = currentEmissions + pathEmissions + haulerIdlingEmissions;
+    document.getElementById('emissionsValueWithoutSmt').textContent = newEmissions.toFixed(2) + ' lbs/week CO2';
+  }
+  
+  // Function to calculate running emissions
+  function calculateRunningEmissions(haulsPerWeek, distance, emissionFactor) {
+    return haulsPerWeek * distance * emissionFactor * conversionFactor;
+  }
+  
+  // Function to calculate idling emissions
+  function calculateWeeklyIdlingEmissions(haulsPerWeek, vit, emissionFactor) {
+    return haulsPerWeek * vit * emissionFactor * conversionFactor;
+  }
+  
+  // Calculate weekly running emissions
+  function calculateWeeklyRunningEmissions(
+    haulsPerWeek,
+    landfillDist,
+    haulerDist
+  ) {
+    let vmt = landfillDist * 2 + haulerDist;
+    let emissionFactor = Emissions.RunningCO2;
+    let weeklyRunningEmissions =
+      haulsPerWeek * vmt * emissionFactor * conversionFactor;
+    return weeklyRunningEmissions;
+  }
+  
+  // Calculate weekly idling emissions
+  function calculateIdlingEmissions(haulsPerWeek, vit) {
+    let emissionFactor = Emissions.IdleCO2;
+    let idlingEmissions =
+      haulsPerWeek * vit * emissionFactor * conversionFactor;
+      console.log('Idling Emissions:', idlingEmissions);
+    return idlingEmissions;
+  }
+  
+  // Calculate emissions for each path
+  function calculatePathEmissions(distance, emissionFactor, isIdle) {
+    if (isIdle) {
+      return vit * emissionFactor * conversionFactor;
+    } else {
+      return distance * emissionFactor * conversionFactor;
+    }
+  }
+  
+  function animateDotAlongPath(pathId, duration, onComplete, reverse = false) {
+    var path = d3.select('#' + pathId);
+    var pathNode = path.node();
+  
+    if (!pathNode) {
+      console.error('Path element not found:', pathId);
+      return;
+    }
+  
+    var totalLength = pathNode.getTotalLength();
+    var dot = d3.select('#visualization-map').append('circle')
+      .attr('r', 5)
+      .attr('fill', 'blue');
+  
+    // Adjust the starting point of the animation based on the 'reverse' flag
+    var startPoint = reverse ? totalLength : 0;
+    var endPoint = reverse ? 0 : totalLength;
+  
+    dot.transition()
+      .duration(duration)
+      .attrTween('transform', function() {
+        return function(t) {
+          var point = reverse ? pathNode.getPointAtLength((1 - t) * totalLength) : pathNode.getPointAtLength(t * totalLength);
+          return 'translate(' + point.x + ',' + point.y + ')';
+        };
+      })
+      .on('end', function() {
+        dot.remove();
+        onComplete();
+      });
+  }
+  
+  
+  function updateHaulingCost(haulCost) {
+    let currentHaulingCost = parseFloat(document.getElementById('haulingCostValue').textContent.replace('$', '')) || 0;
+    let newHaulingCost = currentHaulingCost + haulCost;
+    document.getElementById('haulingCostValue').textContent = `$${newHaulingCost.toFixed(2)}`;
+  }
+  
+  
+  // Usage example for weekly emissions
+  let weeklyRunningEmissions = calculateWeeklyRunningEmissions(
+    haulsPerWeek,
+    landfillDist,
+    haulerDist
+  );
+  let weeklyIdlingEmissions = calculateWeeklyIdlingEmissions(haulsPerWeek, vit);
+  
+  // Usage example for path emissions
+  let haulerToCustomerEmissions = calculatePathEmissions(
+    haulerDist,
+    Emissions.RunningCO2,
+    false
+  );
+  let customerToLandfillEmissions = calculatePathEmissions(
+    landfillDist * 2,
+    Emissions.RunningCO2,
+    false
+  );
+  let customerToTransferStationEmissions = calculatePathEmissions(
+    transferStationDist,
+    Emissions.RunningCO2,
+    false
+  );
+  let haulerIdlingEmissions = calculateIdlingEmissions(1, vit)
+  
+  // Function to run the haul sequence for the given number of hauls
+  function runHaulSequence(hauls, duration) {
+    let currentHaul = 0;
+  
+    function nextPart() {
+      if (currentHaul < hauls) {
+        let transferStationChecked = document.getElementById('transferStation').checked;
+        let haulerDistance = parseFloat(document.getElementById("haulerDistance").value || 0);
+        let landfillDistance = parseFloat(document.getElementById("landfillDistance").value || 0);
+        let transferStationDistance = parseFloat(document.getElementById("transferStationDistance").value || 0);
+        let haulCost = parseFloat(document.getElementById('haulCost').value || 0);
+  
+        // Hauler to Customer
+        animateDotAlongPath('haulerToCustomer', duration, () => {
+          let haulerToCustomerEmissions = calculatePathEmissions(haulerDistance, Emissions.RunningCO2, false);
+          incrementEmissionsForPath(haulerToCustomerEmissions);
+  
+          // Determine the next destination based on transfer station usage
+          let destinationPathId = transferStationChecked ? 'customerToTransfer' : 'customerToLandfill';
+          let destinationEmissions = transferStationChecked ? calculatePathEmissions(transferStationDistance, Emissions.RunningCO2, false) : calculatePathEmissions(landfillDistance, Emissions.RunningCO2, false);
+          updateHaulingCost(haulCost);
+  
+          // Customer to Next Destination (Transfer Station or Landfill)
+          animateDotAlongPath(destinationPathId, duration, () => {
+            incrementEmissionsForPath(destinationEmissions);
+            
+            // Reverse the animation for the return path
+            animateDotAlongPath(destinationPathId, duration, () => {
+              // Use the same emissions for the return path
+              incrementEmissionsForPath(destinationEmissions);
+              currentHaul++;
+              if (currentHaul < hauls) {
+                nextPart();
+              }
+            }, true); // The 'true' flag indicates this is a return path
+          });
+        });
+      }
+    }
+  
+    nextPart();
+  }
+  
+  
+  document.addEventListener("DOMContentLoaded", function () {
+    // Create a new line generator with a curve
+    const lineGenerator = d3.line()
+    .x(d => d.x)
+    .y(d => d.y)
+    .curve(d3.curveCatmullRom); // This curve type creates a smooth path
+  
+    function getPathCoordinates(startIconId, endIconId) {
+      const startIcon = document.getElementById(startIconId);
+      const endIcon = document.getElementById(endIconId);
+    
+      if (!startIcon || !endIcon) {
+        console.error(
+          `One or both elements with IDs "${startIconId}" or "${endIconId}" were not found.`
+        );
+        return null;
+      }
+    
+      // Calculate the top-left corner positions of the icons
+      const startTopLeft = { x: startIcon.offsetLeft, y: startIcon.offsetTop };
+      console.log(startTopLeft);
+      const endTopLeft = { x: endIcon.offsetLeft, y: endIcon.offsetTop };
+      console.log(endTopLeft);
+    
+      // Adjust control points to be closer to the start and end points for a subtler curve
+      const controlPoint1 = { x: startTopLeft.x + (endTopLeft.x - startTopLeft.x) * 0.25, y: startTopLeft.y - 20 };
+      const controlPoint2 = { x: startTopLeft.x + (endTopLeft.x - startTopLeft.x) * 0.75, y: endTopLeft.y - 20 };
+  
+    
+      return [
+        startTopLeft,
+        controlPoint1,
+        controlPoint2,
+        endTopLeft
+      ];
+    }
+    
+  
+    // Call this function when the page loads and also on window resize
+    const haulerToCustomerPathCoordinates = getPathCoordinates(
+      "hauler-icon",
+      "customer-icon"
+    );
+    const customerToLandfillPathCoordinates = getPathCoordinates(
+      "customer-icon",
+      "landfill-icon"
+    );
+    const smtToCustomerPathCoordinates = getPathCoordinates(
+      "smt-icon",
+      "customer-icon"
+    );
+    const customerToTransferPathCoordinates = getPathCoordinates(
+      "customer-icon",
+      "transfer-station-icon"
+    );
+    
+    const pathData = [];
+  
+    pathData.push(
+      {
+        id: "haulerToCustomer",
+        startIcon: "hauler-icon",
+        endIcon: "customer-icon",
+        startX: haulerToCustomerPathCoordinates.startX,
+        startY: haulerToCustomerPathCoordinates.startY,
+        endX: haulerToCustomerPathCoordinates.endX,
+        endY: haulerToCustomerPathCoordinates.endY,
+        distance: 0,
+        emissionFactor: 0,
+        color: "brown",
+      },
+      {
+        id: "customerToLandfill",
+        startIcon: "customer-icon",
+        endIcon: "landfill-icon",
+        startX: customerToLandfillPathCoordinates.startX,
+        startY: customerToLandfillPathCoordinates.startY,
+        endX: customerToLandfillPathCoordinates.endX,
+        endY: customerToLandfillPathCoordinates.endY,
+        distance: 0,
+        emissionFactor: 0,
+        color: "green",
+      },
+      {
+        id: "smtToCustomer",
+        startIcon: "smt-icon",
+        endIcon: "customer-icon",
+        startX: smtToCustomerPathCoordinates.startX,
+        startY: smtToCustomerPathCoordinates.startY,
+        endX: smtToCustomerPathCoordinates.endX,
+        endY: smtToCustomerPathCoordinates.endY,
+        distance: 0,
+        emissionFactor: 0,
+        color: "red",
+      },
+      {
+        id: "customerToTransfer",
+        endIcon: "customer-icon",
+        startIcon: "transfer-station-icon",
+        startX: customerToTransferPathCoordinates.startX,
+        startY: customerToTransferPathCoordinates.startY,
+        endX: customerToTransferPathCoordinates.endX,
+        endY: customerToTransferPathCoordinates.endY,
+        distance: 0,
+        emissionFactor: 0,
+        color: "green",
+      },
+    );
+  // When creating paths
+  d3.select("#visualization-map")
+    .selectAll("path")
+    .data(pathData)
+    .enter()
+    .append("path")
+    .attr("d", d => lineGenerator(getPathCoordinates(d.startIcon, d.endIcon))) // Generate the path using the line generator
+    .attr("stroke", d => d.color)
+    .attr("fill", "none") // Set fill to none
+    .attr("id", d => d.id);
+  
+  
+  
+    pathData.forEach((path) => {
+      d3.select(`#${path.id}`)
+        .transition()
+        .duration(2000)
+        .attrTween("stroke-dasharray", function () {
+          const length = this.getTotalLength();
+          return d3.interpolate(`0,${length}`, `${length},${length}`);
+        });
+    });
+    d3.selectAll("path")
+      .on("mouseover", function (event, d) {
+        // Show tooltip
+        d3.select("#tooltip")
+          .style("left", event.pageX + "px")
+          .style("top", event.pageY + "px")
+          .style("display", "inline-block")
+          .html(
+            `Path: ${d.id}<br>Emissions: ${calculatePathEmissions(
+              d.distance,
+              d.emissionFactor,
+              false
+            ).toFixed(2)} lbs CO2`
+          );
+      })
+      .on("mouseout", function () {
+        // Hide tooltip
+        d3.select("#tooltip").style("display", "none");
+      });
+  
+    const svg = d3
+      .select("#visualization-map")
+      .attr("preserveAspectRatio", "xMinYMin meet")
+      .attr("viewBox", "0 0 400 400")
+      .classed("svg-content-responsive", true);
+  
+    // JavaScript function to animate the hauler
+    function animateHauler() {
+      const hauler = document.getElementById("hauler-location");
+      let position = 0;
+      const endPosition = 80; // Assume 80% is the end position
+  
+      function frame() {
+        if (position < endPosition) {
+          position++; // update position
+          hauler.setAttribute("cx", position + "%"); // move the hauler
+          updateEmissions(position); // update emissions based on new position
+          requestAnimationFrame(frame); // call frame again
+        }
+      }
+  
+      requestAnimationFrame(frame); // start the animation
+    }
+    window.addEventListener("resize", function () {
+      updatePathData(); // Function to update the path coordinates
+      console.log("Path Updated");
+    });
+  
+    function updatePathData() {
+      const newHaulerToCustomerCoordinates = getPathCoordinates(
+        "hauler-icon",
+        "customer-icon"
+      );
+      const newCustomerToLandfillCoordinates = getPathCoordinates(
+        "customer-icon",
+        "landfill-icon"
+      );
+      const newSmtToCustomerCoordinates = getPathCoordinates(
+        "smt-icon",
+        "customer-icon"
+      );
+      const newCustomerToTransferCoordinates = getPathCoordinates(
+        "customer-icon",
+        "transfer-station-icon"
+      );
+  
+      pathData.forEach((path) => {
+        switch (path.id) {
+          case "haulerToCustomer":
+            path.startX = newHaulerToCustomerCoordinates.startX;
+            path.startY = newHaulerToCustomerCoordinates.startY;
+            path.endX = newHaulerToCustomerCoordinates.endX;
+            path.endY = newHaulerToCustomerCoordinates.endY;
+            break;
+          case "customerToLandfill":
+            path.startX = newCustomerToLandfillCoordinates.startX;
+            path.startY = newCustomerToLandfillCoordinates.startY;
+            path.endX = newCustomerToLandfillCoordinates.endX;
+            path.endY = newCustomerToLandfillCoordinates.endY;
+            break;
+          case "smtToCustomer":
+            path.startX = newSmtToCustomerCoordinates.startX;
+            path.startY = newSmtToCustomerCoordinates.startY;
+            path.endX = newSmtToCustomerCoordinates.endX;
+            path.endY = newSmtToCustomerCoordinates.endY;
+            break;
+          case "customerToTransfer":
+            path.startX = newCustomerToTransferCoordinates.startX;
+            path.startY = newCustomerToTransferCoordinates.startY;
+            path.endX = newCustomerToTransferCoordinates.endX;
+            path.endY = newCustomerToTransferCoordinates.endY;
+            break;
+          }
+      });
+  
+      // Now update the paths in the SVG using D3
+      d3.select("#visualization-map")
+      .selectAll("path")
+      .data(pathData)
+      .attr("d", d => lineGenerator(getPathCoordinates(d.startIcon, d.endIcon))); // Use the returned array with the line generator
+  }
+    window.addEventListener("resize", updatePathData);
+  
+    document
+      .getElementById("transferStation")
+      .addEventListener("change", function () {
+        var transferStationChecked = this.checked;
+        var transferStationDistanceContainer = document.getElementById(
+          "transferStationDistanceContainer"
+        );
+        var landfillDistanceField = document.getElementById("landfillDistance"); // Ensure this is the correct ID for your landfill distance input
+        var landfillDistanceLabel = document.querySelector(
+          'label[for="landfillDistance"]'
+        ); // Adjust if needed to select the correct label
+  
+        transferStationDistanceContainer.style.display = transferStationChecked
+          ? "block"
+          : "none";
+        landfillDistanceField.style.display =
+          landfillDistanceLabel.style.display = transferStationChecked
+            ? "none"
+            : "block";
+      });
+  
+    document
+      .getElementById("haulingCostForm")
+      .addEventListener("submit", function (event) {
+        var transferStationDistance = document.getElementById(
+          "transferStationDistance"
+        ).value;
+        console.log("Transfer Station Distance:", transferStationDistance);
+        event.preventDefault();
+  
+        // Extracting values from the form
+        var haulsPerWeek = parseFloat(
+          document.getElementById("haulsPerWeek").value
+        );
+        var transferStation = document.getElementById("transferStation").checked;
+        var compactibility = document.getElementById("compactibility").value;
+        var landfillDistance = parseFloat(
+          document.getElementById("landfillDistance").value
+        );
+        var haulerDistance = parseFloat(
+          document.getElementById("haulerDistance").value || 10
+        );
+        const vit = 0.3; // Vehicle idling time per haul in hours from the whitepaper
+  
+        // Perform the emissions calculations
+        const weeklyRunningEmissions = calculateWeeklyRunningEmissions(
+          haulsPerWeek,
+          landfillDistance,
+          haulerDistance
+        );
+        const weeklyIdlingEmissions = calculateWeeklyIdlingEmissions(
+          haulsPerWeek,
+          vit
+        );
+  
+        // Display the calculated emissions in the 'Estimated Emissions Without SMT' box
+        document.getElementById("emissionsValueWithoutSmt").textContent = `${(
+          weeklyRunningEmissions + weeklyIdlingEmissions
+        ).toFixed(2)} lbs/week CO2`;
+  
+        // Add your further processing here
+      });
+  
+    document
+      .getElementById("submitWithoutSMT")
+      .addEventListener("click", function (event) {
+        event.preventDefault();
+  
+        let emissionsElement = document.getElementById(
+          "emissionsValueWithoutSmt"
+        );
+        emissionsElement.textContent = "0 lbs/week CO2";
+        let haulingCostElement = document.getElementById("haulingCostValue");
+        haulingCostElement.textContent = "$0.00";
+  
+        // Get form values
+        let haulsPerWeek =
+          parseFloat(document.getElementById("haulsPerWeek").value) || 0;
+        let landfillDistance =
+          parseFloat(document.getElementById("landfillDistance").value) || 0;
+        let haulerDistance =
+          parseFloat(document.getElementById("haulerDistance").value) || 0;
+  
+        let haulCost = parseFloat(document.getElementById("haulCost").value) || 0;
+  
+        let transferStationChecked =
+          document.getElementById("transferStation").checked;
+        let transferStationDistance = parseFloat(
+          document.getElementById("transferStationDistance").value || 0
+        );
+        document.getElementById('emissionsValueWithoutSmt').textContent = '0 lbs/week CO2';
+  
+        runHaulSequence(haulsPerWeek, 2000); // Duration 2000 can be adjusted
+    });
+   /// animateDotAlongPath('haulerToCustomer', 2000, haulsPerWeek, Emissions.RunningCO2, false);
+  
+  });
+  
