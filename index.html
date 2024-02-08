@@ -68,7 +68,7 @@
                 </svg>
                 <div id="button-section">
                     <button id="submitWithoutSMT">Submit Without SMT</button>
-                    <button id="submitWithSMT">Submit With SMT (Coming Soon)</button>
+                    <button id="submitWithSMT">Submit With SMT</button>
                 </div>        
                 <div id="tooltip" style="position: absolute; display: none; pointer-events: none; background-color: white; border: 1px solid black; padding: 5px; border-radius: 5px;"></div>
 
@@ -79,7 +79,7 @@
             <div class="emissions-container">
                 <div id="emissionsWithoutSmt" class="emissions-box">
                     <h3>Estimated Cost & Emissions without SMT:</h3>
-                    <p id="emissionsValueWithoutSmt">0 kg CO2</p>
+                    <p id="emissionsValueWithoutSmt">0 lbs CO2</p>
                     <h3>Hauling Cost:</h3>
                     <p id="haulingCostValue">$0</p>
                 </div>
@@ -87,7 +87,7 @@
                 
                 <div id="emissionsWithSmt" class="emissions-box">
                     <h3>Estimated Cost / Emissions with SMT:</h3>
-                    <p id="emissionsValueWithSmt">0 kg CO2</p>
+                    <p id="emissionsValueWithSmt">0 lbs CO2</p>
                     <h3>Estimated New Hauling Cost:</h3>
                     <p id="newHaulingCostValue">$0</p>
                 </div>
@@ -96,6 +96,30 @@
             <div class="hauling-cost-container">
 
         </div>
+
+        <div id="smtSavingsModal" class="modal">
+            <div class="modal-content">
+                <span class="close-button">&times;</span>
+                <h2>Estimated Savings with SMT</h2>
+                <br>
+                <strong><p id="savingsAmount"></p></strong>
+                <p id="emissionsReduction"></p>
+                <strong><p id="yearlyCostSavings"></p></strong>
+                <p id="yearlyEmissionsSavings"></p>
+                <button id="seeMoreButton">See More C02 Equivalencies</button>
+                <div id="equivalenciesSection" style="display: none;">
+                    <br>
+                    <strong><p>Your Yearly C02 Saved is Equal to:</p></strong>
+                    <p>Gallons of Diesel Saved: <span id="dieselSaved"></span></p>
+                    <p>Number of Trees Planted: <span id="treesPlanted"></span></p>
+                    <p>Homes' Energy Use for One Year: <span id="energySaved"></span></p>
+                    <p>Miles Driven by an Average Passenger Vehicle: <span id="milesAvoided"></span></p>
+                </div>
+            </div>
+        </div>
+
+        <div id="toast" class="toast" style="display:none;">Please run the simulation without SMT first.</div>
+
         
           
         <script src="https://d3js.org/d3.v7.min.js"></script>

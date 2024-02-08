@@ -175,16 +175,27 @@ function animateDotAlongPath(pathId, duration, onComplete, reverse = false, batc
 
 
 function updateHaulingCost(haulCost) {
-  let currentHaulingCost = parseFloat(document.getElementById('haulingCostValue').textContent.replace('$', '')) || 0;
+  let currentHaulingCost = parseFloat(document.getElementById('haulingCostValue').textContent.replace(/[^0-9.-]+/g,"")) || 0;
   let newHaulingCost = currentHaulingCost + haulCost;
-  document.getElementById('haulingCostValue').textContent = `$${newHaulingCost.toFixed(2)}`;
+  const formattedHaulingCost = new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 2
+  }).format(newHaulingCost);
+  document.getElementById('haulingCostValue').textContent = formattedHaulingCost;
 }
 
 function updateHaulingCostWithSMT(haulCost) {
-  let currentHaulingCost = parseFloat(document.getElementById('newHaulingCostValue').textContent.replace('$', '')) || 0;
+  let currentHaulingCost = parseFloat(document.getElementById('newHaulingCostValue').textContent.replace(/[^0-9.-]+/g,"")) || 0;
   let newHaulingCost = currentHaulingCost + haulCost;
-  document.getElementById('newHaulingCostValue').textContent = `$${newHaulingCost.toFixed(2)}`;
+  const formattedHaulingCostWithSMT = new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 2
+  }).format(newHaulingCost);
+  document.getElementById('newHaulingCostValue').textContent = formattedHaulingCostWithSMT;
 }
+
 
 
 // Usage example for weekly emissions
@@ -214,7 +225,7 @@ let customerToTransferStationEmissions = calculatePathEmissions(
 let haulerIdlingEmissions = calculateIdlingEmissions(1, vit)
 
 // Function to run the haul sequence for the given number of hauls
-function runHaulSequence(hauls, duration) {
+function runHaulSequence(hauls, duration, onComplete) {
   let currentHaul = 0;
   const batchSize = (hauls >= 6 && hauls <= 9) ? 5 : hauls > 20 ? 10 : (hauls >= 10 && hauls <= 20) ? 5 : hauls;
 
@@ -249,12 +260,15 @@ function runHaulSequence(hauls, duration) {
           // Reverse the animation for the return path - Simulate once for the batch
           animateDotAlongPath(destinationPathId, duration, () => {
             incrementEmissionsForPath('haulerToCustomer', destinationRunningEmissions, (batchIdlingEmissions / 3));
-            currentHaul = batchEnd; // Move to the end of the current batch
+            currentHaul += batchSize;
             if (currentHaul < hauls) {
-              // Delay before starting the next batch
-              setTimeout(processBatch, duration);
+                setTimeout(processBatch, duration);
+            } else {
+                if (typeof onComplete === 'function') {
+                    onComplete(); // Callback when the entire sequence is complete
+                }
             }
-          }, true, haulsInCurrentBatch); // Pass haulsInCurrentBatch for return path too
+        }, true, haulsInCurrentBatch); // Indicates return path
         }, false, haulsInCurrentBatch); // Ensure haulsInCurrentBatch is passed here
       }, false, haulsInCurrentBatch); // Pass the batch count as an argument
     }
@@ -294,7 +308,7 @@ function runSMTSequence(compactibility, hauls, duration) {
 
         // Proceed with the hauler path simulation
         animateHaulerPath(currentHaul);
-      }, false, timesSmashed > 1 ? timesSmashed : undefined); // Pass timesSmashed for the dot text only if > 1
+      }, false, timesSmashed > 1 ? timesSmashed : undefined); 
     }
   }
 
@@ -324,17 +338,30 @@ function runSMTSequence(compactibility, hauls, duration) {
         // Reverse the animation for the return path - Simulate once for the batch
         animateDotAlongPath(destinationPathId, duration, () => {
           incrementEmissionsForPathWithSMT('haulerToCustomer', destinationRunningEmissions, (haulerIdlingEmissions / 3));
-          if (currentHaul < adjustedHauls) {
+          if (currentHaul + 1 >= adjustedHauls) {
+            let currentEmissions = parseFloat(document.getElementById('emissionsValueWithoutSmt').textContent);
+            let currentEmissionsWithSMT = parseFloat(document.getElementById('emissionsValueWithSmt').textContent);
+            let emissionsSavings = currentEmissions - currentEmissionsWithSMT;
+
+            let currentCost = parseFloat(document.getElementById('haulingCostValue').textContent.replace('$', ''));
+            let currentCostWithSMT = parseFloat(document.getElementById('newHaulingCostValue').textContent.replace('$', ''));
+            let costSavings = currentCost - currentCostWithSMT;
+            
+            let yearlyCostSavings = costSavings * 52;
+            let yearlyEmissionsSaved = emissionsSavings * 52;
+            showSMTSavingsModal(costSavings, emissionsSavings, yearlyCostSavings, yearlyEmissionsSaved);
+          } else {
+            // Not the last haul, proceed with the next SMT animation after a delay
             setTimeout(() => animateSMTPath(currentHaul + 1), duration);
           }
-        }, true);
+        }, true); // Indicates this is a return path
       }); 
     }); 
   }
   
   animateSMTPath();
-}  
-
+} 
+ 
 function calculateSMTPathEmissions(timesSmashed, defaultSMTDistance) {
 
   const CF = 0.00220462; 
@@ -351,34 +378,95 @@ function calculateSMTPathEmissions(timesSmashed, defaultSMTDistance) {
   return totalSMTEmissions; // Return total emissions for the SMT service
 }
 
+// Function to open the SMT Savings Modal
+function showSMTSavingsModal(savings, emissionsReduction, yearlyCost, yearlyEmissions) {
 
-// Call this function when the SMT service is to be simulated
-document.getElementById("submitWithSMT").addEventListener("click", function (event) {
-  event.preventDefault();
+  // Format the savings as a currency string
+const formattedSavings = new Intl.NumberFormat('en-US', {
+  style: 'currency',
+  currency: 'USD',
+  minimumFractionDigits: 2
+}).format(savings);
+
+// Format the yearlyCost as a currency string
+const formattedYearlyCost = new Intl.NumberFormat('en-US', {
+  style: 'currency',
+  currency: 'USD',
+  minimumFractionDigits: 2
+}).format(yearlyCost);
 
 
-  // Get form values
-  let haulsPerWeek = parseFloat(document.getElementById("haulsPerWeek").value) || 0;
-  let landfillDistance = parseFloat(document.getElementById("landfillDistance").value) || 0;
-  let haulerDistance = parseFloat(document.getElementById("haulerDistance").value) || 0;
-  let compactibilityValue = document.getElementById('compactibility').value;
-  let haulCost = parseFloat(document.getElementById("haulCost").value) || 0;
-  let transferStationChecked = document.getElementById("transferStation").checked;
-  let transferStationDistance = parseFloat(document.getElementById("transferStationDistance").value) || 0;
-  const ST = 0.083333333; 
-  const CF = 0.00220462; 
 
-  const smashingEmissions = calculateSmashingEmissions(haulsPerWeek, ST, Emissions.SmashCO2, CF);
-  console.log(`Smashing Emissions: ${smashingEmissions.toFixed(2)} lbs/week`);
+  // Existing updates to modal content
+  document.getElementById('savingsAmount').innerHTML = `Estimated Weekly Cost Savings: <span style="color: green;">${formattedSavings}</span>`;
+  document.getElementById('emissionsReduction').innerText = `Estimated Weekly Emissions Reduction: ${emissionsReduction.toFixed(2)} lbs CO2/week`;
+  document.getElementById('yearlyCostSavings').innerHTML = `Estimated Yearly Cost Savings: <span style="color: green;">${formattedYearlyCost}</span>`;
+  document.getElementById('yearlyEmissionsSavings').innerText = `Estimated Yearly Emissions Reduction: ${yearlyEmissions.toFixed(2)} lbs CO2/year`;
 
-  let totalHaulerDistWithLandfill = haulerDistance + landfillDistance;
-  let totalHaulerDistWithTransfer = haulerDistance + transferStationDistance;
+  // Hide the equivalencies section initially each time the modal is shown
+  document.getElementById('equivalenciesSection').style.display = 'none';
 
-  let smtDistance = 2 
+  // Display the modal
+  var modal = document.getElementById('smtSavingsModal');
+  modal.style.display = "block";
+
+  // Initialize "See More" button functionality
+  document.getElementById('seeMoreButton').addEventListener('click', function() {
+    var equivalenciesSection = document.getElementById('equivalenciesSection');
+    
+    // Toggle the display status based on its current state
+    if (getComputedStyle(equivalenciesSection).display === 'none') {
+      // If hidden, show it and calculate/update equivalencies
+      equivalenciesSection.style.display = 'block';
+      updateEquivalencies(parseFloat(document.getElementById('emissionsReduction').textContent.split(':')[1].trim().split(' ')[0]));
+    } else {
+      // If shown, hide it
+      equivalenciesSection.style.display = 'none';
+    }
+  });
   
-  runSMTSequence(compactibilityValue, haulsPerWeek, 2000); // Duration 2000 can be adjusted
 
-});
+  // Close modal functionality
+  var span = document.getElementsByClassName("close-button")[0];
+  span.onclick = function() {
+    modal.style.display = "none";
+  };
+  window.onclick = function(event) {
+    if (event.target == modal) {
+      modal.style.display = "none";
+    }
+  };
+}
+
+// Function to calculate and update equivalencies
+function updateEquivalencies(emissionsReductionLbs) {
+  // Calculate equivalencies based on emissionsReductionLbs
+  document.getElementById('dieselSaved').textContent = (emissionsReductionLbs * equivalencyFactors.diesel).toFixed(2) + ' gallons';
+  document.getElementById('treesPlanted').textContent = (emissionsReductionLbs * equivalencyFactors.trees).toFixed(2) + ' trees';
+  document.getElementById('energySaved').textContent = (emissionsReductionLbs * equivalencyFactors.energy).toFixed(2) + ' homes';
+  document.getElementById('milesAvoided').textContent = (emissionsReductionLbs * equivalencyFactors.miles).toFixed(2) + ' miles';
+}
+
+
+const equivalencyFactors = {
+  diesel: 22.38, // Gallons of diesel burned per 100 lbs of CO2
+  trees: 0.039, // Number of trees planted per lb of CO2
+  energy: 0.000118, // Homes' energy use for one year per lb of CO2
+  miles: 0.91, // Miles driven by an average passenger vehicle per lb of CO2
+};
+
+
+function showToast(message, duration = 3000) {
+  const toast = document.getElementById('toast');
+  toast.textContent = message;
+  toast.style.display = 'block';
+
+  setTimeout(() => {
+    toast.style.display = 'none';
+  }, duration);
+}
+
+
 
 // Function to calculate the number of smashes based on compactibility
 function calculateSmashes(haulsPerWeek, compactibility) {
@@ -467,6 +555,7 @@ function getPathCoordinates(startIconId, endIconId) {
 }
 
 document.addEventListener("DOMContentLoaded", function () {
+  let hasRunWithoutSMT = false;
 
   // Call this function when the page loads and also on window resize
   const haulerToCustomerPathCoordinates = getPathCoordinates(
@@ -726,6 +815,7 @@ d3.select("#visualization-map")
       // Add your further processing here
     });
 
+
   document
     .getElementById("submitWithoutSMT")
     .addEventListener("click", function (event) {
@@ -754,8 +844,42 @@ d3.select("#visualization-map")
       );
       document.getElementById('emissionsValueWithoutSmt').textContent = '0 lbs/week CO2';
 
-      runHaulSequence(haulsPerWeek, 2000); // Duration 2000 can be adjusted
+      runHaulSequence(haulsPerWeek, 2000, function() {
+        hasRunWithoutSMT = true;
+        console.log("Haul sequence without SMT completed.");
+    });
+  }
+  );
+  
+  // Call this function when the SMT service is to be simulated
+  document.getElementById("submitWithSMT").addEventListener("click", function (event) {
+    event.preventDefault();
+    if (!hasRunWithoutSMT) {
+      showToast("Please run the simulation without SMT first.");
+      return;
+    }
+
+    // Get form values
+    let haulsPerWeek = parseFloat(document.getElementById("haulsPerWeek").value) || 0;
+    let landfillDistance = parseFloat(document.getElementById("landfillDistance").value) || 0;
+    let haulerDistance = parseFloat(document.getElementById("haulerDistance").value) || 0;
+    let compactibilityValue = document.getElementById('compactibility').value;
+    let haulCost = parseFloat(document.getElementById("haulCost").value) || 0;
+    let transferStationChecked = document.getElementById("transferStation").checked;
+    let transferStationDistance = parseFloat(document.getElementById("transferStationDistance").value) || 0;
+    const ST = 0.083333333; 
+    const CF = 0.00220462; 
+
+    const smashingEmissions = calculateSmashingEmissions(haulsPerWeek, ST, Emissions.SmashCO2, CF);
+    console.log(`Smashing Emissions: ${smashingEmissions.toFixed(2)} lbs/week`);
+
+    let totalHaulerDistWithLandfill = haulerDistance + landfillDistance;
+    let totalHaulerDistWithTransfer = haulerDistance + transferStationDistance;
+
+    let smtDistance = 2 
+    
+    runSMTSequence(compactibilityValue, haulsPerWeek, 2000); // Duration 2000 can be adjusted
+
   });
-   /// animateDotAlongPath('haulerToCustomer', 2000, haulsPerWeek, Emissions.RunningCO2, false);
 
 });
