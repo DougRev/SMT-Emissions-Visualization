@@ -9,38 +9,39 @@
 </head>
 <body>
     <h1>Trash Hauling Cost Calculator</h1>
+    
     <div class="container">
         <div class="form-section">
             <form id="haulingCostForm">
                 <label for="haulsPerWeek">Hauls Per Week (without SMT):</label>
-                <input type="number" id="haulsPerWeek" name="haulsPerWeek" min="0"><br><br>
+                <input type="number" id="haulsPerWeek" name="haulsPerWeek" min="0"><br>
         
                 <label for="compactibility">Compactibility:</label>
                 <select id="compactibility" name="compactibility">
                     <option value="high">High</option>
                     <option value="medium">Medium</option>
                     <option value="low">Low</option>
-                </select><br><br>
+                </select><br>
         
                 <label for="haulCost">Haul Cost ($):</label>
                 <input type="number" id="haulCost" name="haulCost" min="0" step="0.01">
-                <br><br>
+                <br>
                 
                 <label for="haulerDistance">Distance to the Hauler (in miles):</label>
                 <input type="number" id="haulerDistance" name="haulerDistance" min="0" step="0.1">
-                <br><br>  
+                <br>  
                 
                 <label for="transferStation">Does the Hauler use a Transfer Station?</label>
-                <input type="checkbox" id="transferStation" name="transferStation"><br><br>
+                <input type="checkbox" id="transferStation" name="transferStation"><br>
         
                 <div id="transferStationDistanceContainer" style="display: none;">
                     <label for="transferStationDistance">Transfer Station Distance (in miles):</label>
                     <input type="number" id="transferStationDistance" name="transferStationDistance" min="0" step="0.1">
-                    <br><br>
+                    <br>
                 </div>
                 <label for="landfillDistance">Distance to the Landfill (in miles):</label>
                 <input type="number" id="landfillDistance" name="landfillDistance" min="0" step="0.1">
-                <br><br>        
+                <br>      
         
                 <!--<button id="submitButton" type="submit">Calculate</button>-->
             </form>
@@ -50,7 +51,7 @@
                 <!-- Icons represented as circles for simplicity -->
                 <img src="/images/hauler-icon-png.png" id="hauler-icon" style="position: absolute; top: 10%; left: 20%; transform: translate(-50%, -50%);"></i>
                 <img src="/images/SmashMyTrash.logo portrait colors (1) (1).png" class="" id="smt-icon" style="position: absolute; top: 30%; left: 15%; transform: translate(-50%, -50%);"></i>
-                <img src="/images/dumpster-color-png.png" class="" id="customer-icon" style="position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%);"></i>
+                <img src="/images/dumpster-color-png.png" class="" id="customer-icon" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);"></i>
                 <img src="/images/landfill (1).png" class="" id="landfill-icon" style="position: absolute; top: 10%; left: 67%; transform: translate(-50%, -50%);"></i>
                 <img src="/images/transfer.png" class="" id="transfer-station-icon" style="position: absolute; top: 25%; left: 90%; transform: translate(-50%, -50%);"></i>
 
@@ -67,29 +68,33 @@
                 </svg>
                 <div id="button-section">
                     <button id="submitWithoutSMT">Submit Without SMT</button>
-                    <button id="submitWithSMT" disabled>Submit With SMT (Coming Soon)</button>
+                    <button id="submitWithSMT">Submit With SMT (Coming Soon)</button>
                 </div>        
                 <div id="tooltip" style="position: absolute; display: none; pointer-events: none; background-color: white; border: 1px solid black; padding: 5px; border-radius: 5px;"></div>
 
         </div>
 
         <div class="emissions-section">
+            <h2>Emissions</h2>
+            <div class="emissions-container">
+                <div id="emissionsWithoutSmt" class="emissions-box">
+                    <h3>Estimated Cost & Emissions without SMT:</h3>
+                    <p id="emissionsValueWithoutSmt">0 kg CO2</p>
+                    <h3>Hauling Cost:</h3>
+                    <p id="haulingCostValue">$0</p>
+                </div>
+            </div>
+                
+                <div id="emissionsWithSmt" class="emissions-box">
+                    <h3>Estimated Cost / Emissions with SMT:</h3>
+                    <p id="emissionsValueWithSmt">0 kg CO2</p>
+                    <h3>Estimated New Hauling Cost:</h3>
+                    <p id="newHaulingCostValue">$0</p>
+                </div>
+            </div>
+        
+            <div class="hauling-cost-container">
 
-            <div id="emissionsWithoutSmt">
-                <h3>Estimated Emissions Without SMT:</h3>
-                <p id="emissionsValueWithoutSmt">0 kg CO2</p>
-            </div>
-            
-            <div id="emissionsWithSmt">
-                <h3>Estimated Emissions With SMT:</h3>
-                <p id="emissionsValueWithSmt">0 kg CO2</p>
-            </div>
-
-            <div class="hauling-cost-section">
-                <h3>Hauling Cost:</h3>
-                <p id="haulingCostValue">$0</p>
-            </div>
-            
         </div>
         
           

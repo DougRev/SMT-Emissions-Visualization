@@ -32,7 +32,8 @@ h1 {
   font-size: 2.5em;
   color: #007bff;
   text-align: center;
-  margin-bottom: 20px;
+  margin-bottom: 5px;
+  margin-top: 20px;
 }
 
 h3 {
@@ -73,11 +74,6 @@ main {
   height: 400px;
   margin-right: 20px;
   background-color: #eaeaea; 
-}
-
-
-h1 {
-  color: #333;
 }
 
 form {
@@ -210,11 +206,12 @@ button:hover {
 }
 
 #emissionsWithoutSmt,
-#emissionsWithSmt {
+#emissionsWithSmt,.hauling-cost-section {
   padding: 10px;
-  border: 1px solid #ccc;
+  border: 3px solid #393939;
   border-radius: 5px;
-  margin-top: 20px;
+  margin-top: 5px;
+  margin-bottom: 10px;
 }
 .container {
   display: grid;
@@ -311,3 +308,27 @@ button:hover {
 #landfill-icon{
     width: 70px;
 }
+
+/* Animate Emissions Change */
+
+.emission-bubble {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    background: lightgreen; /* Or any color that fits the theme */
+    padding: 5px 10px;
+    border-radius: 10px;
+    animation: bubbleAnimation 4s forwards;
+  }
+  
+  @keyframes bubbleAnimation {
+    0% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    100% {
+      opacity: 0;
+      transform: translateY(-100px); /* Moves the bubble up */
+    }
+  }
+  

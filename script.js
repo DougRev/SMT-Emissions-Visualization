@@ -30,11 +30,68 @@ let transferStationDist = transferStationDistance;
 let haulingCost = haulCost;
 
 // Define incrementEmissionsForPath in the global scope
-function incrementEmissionsForPath(pathEmissions) {
+function incrementEmissionsForPath(pathId, pathRunningEmissions, pathIdlingEmissions) {
+
   let currentEmissions = parseFloat(document.getElementById('emissionsValueWithoutSmt').textContent) || 0;
-  let newEmissions = currentEmissions + pathEmissions + haulerIdlingEmissions;
+  console.log(pathRunningEmissions, pathIdlingEmissions);
+  // Convert the path emissions and idling emissions to pounds
+  let totalPathEmissions = pathRunningEmissions + pathIdlingEmissions;
+  let newEmissions = currentEmissions + totalPathEmissions;
+  
+  // Retrieve the end icon ID from the path element's custom attribute
+  var pathElement = d3.select('#' + pathId).node();
+  var endIconId = pathElement.getAttribute('endIcon'); // Assuming you've set this attribute when creating the path
+  var endIconElement = document.getElementById(endIconId);
+
+  if (endIconElement) {
+    animateEmissionChange(totalPathEmissions, endIconElement);
+  } else {
+    console.error('End icon element not found for path: ' + pathId);
+  }
+
   document.getElementById('emissionsValueWithoutSmt').textContent = newEmissions.toFixed(2) + ' lbs/week CO2';
 }
+
+function incrementEmissionsForPathWithSMT(pathId, pathRunningEmissions, pathIdlingEmissions) {
+
+  let currentEmissions = parseFloat(document.getElementById('emissionsValueWithSmt').textContent) || 0;
+  console.log(pathRunningEmissions, pathIdlingEmissions);
+  // Convert the path emissions and idling emissions to pounds
+  let totalPathEmissions = pathRunningEmissions + pathIdlingEmissions;
+  let newEmissions = currentEmissions + totalPathEmissions;
+  
+  // Retrieve the end icon ID from the path element's custom attribute
+  var pathElement = d3.select('#' + pathId).node();
+  var endIconId = pathElement.getAttribute('endIcon'); // Assuming you've set this attribute when creating the path
+  var endIconElement = document.getElementById(endIconId);
+
+  if (endIconElement) {
+    animateEmissionChange(totalPathEmissions, endIconElement);
+  } else {
+    console.error('End icon element not found for path: ' + pathId);
+  }
+
+  document.getElementById('emissionsValueWithSmt').textContent = newEmissions.toFixed(2) + ' lbs/week CO2';
+}
+
+function animateEmissionChange(emissionAmount, iconElement) {
+  const rect = iconElement.getBoundingClientRect();
+  const bubble = document.createElement('div');
+  bubble.classList.add('emission-bubble');
+  bubble.textContent = `+${emissionAmount.toFixed(2)} CO2`;
+
+  // Position the bubble over the icon
+  bubble.style.left = `${rect.left + rect.width / 2}px`;
+  bubble.style.top = `${rect.top - 10}px`; // Adjust as needed
+
+  document.body.appendChild(bubble);
+
+  // Remove the bubble after animation
+  bubble.addEventListener('animationend', function() {
+    bubble.remove();
+  });
+}
+
 
 // Function to calculate running emissions
 function calculateRunningEmissions(haulsPerWeek, distance, emissionFactor) {
@@ -64,7 +121,6 @@ function calculateIdlingEmissions(haulsPerWeek, vit) {
   let emissionFactor = Emissions.IdleCO2;
   let idlingEmissions =
     haulsPerWeek * vit * emissionFactor * conversionFactor;
-    console.log('Idling Emissions:', idlingEmissions);
   return idlingEmissions;
 }
 
@@ -77,25 +133,33 @@ function calculatePathEmissions(distance, emissionFactor, isIdle) {
   }
 }
 
-function animateDotAlongPath(pathId, duration, onComplete, reverse = false) {
+function animateDotAlongPath(pathId, duration, onComplete, reverse = false, batchCount) {
   var path = d3.select('#' + pathId);
   var pathNode = path.node();
-
+  console.log('Batch Count in Animate Function:', batchCount);
   if (!pathNode) {
     console.error('Path element not found:', pathId);
     return;
   }
 
   var totalLength = pathNode.getTotalLength();
-  var dot = d3.select('#visualization-map').append('circle')
-    .attr('r', 5)
+
+  // Create a group to hold both the dot and the text
+  var dotGroup = d3.select('#visualization-map').append('g');
+
+  var dot = dotGroup.append('circle')
+    .attr('r', 8) // Increased radius for visibility of the text
     .attr('fill', 'blue');
 
-  // Adjust the starting point of the animation based on the 'reverse' flag
-  var startPoint = reverse ? totalLength : 0;
-  var endPoint = reverse ? 0 : totalLength;
+  // Add text to the group, adjusting size for visibility
+  var text = dotGroup.append('text')
+    .attr('text-anchor', 'middle') // Center the text horizontally
+    .attr('dy', '.3em') // Adjust the vertical alignment to be in the middle
+    .style('fill', 'white') // Text color
+    .style('font-size', '10px') // Specify font size for clarity
+    .text(batchCount); // Set the batch count as the text
 
-  dot.transition()
+  dotGroup.transition()
     .duration(duration)
     .attrTween('transform', function() {
       return function(t) {
@@ -104,7 +168,7 @@ function animateDotAlongPath(pathId, duration, onComplete, reverse = false) {
       };
     })
     .on('end', function() {
-      dot.remove();
+      dotGroup.remove(); // Remove the entire group, including the dot and text
       onComplete();
     });
 }
@@ -114,6 +178,12 @@ function updateHaulingCost(haulCost) {
   let currentHaulingCost = parseFloat(document.getElementById('haulingCostValue').textContent.replace('$', '')) || 0;
   let newHaulingCost = currentHaulingCost + haulCost;
   document.getElementById('haulingCostValue').textContent = `$${newHaulingCost.toFixed(2)}`;
+}
+
+function updateHaulingCostWithSMT(haulCost) {
+  let currentHaulingCost = parseFloat(document.getElementById('newHaulingCostValue').textContent.replace('$', '')) || 0;
+  let newHaulingCost = currentHaulingCost + haulCost;
+  document.getElementById('newHaulingCostValue').textContent = `$${newHaulingCost.toFixed(2)}`;
 }
 
 
@@ -146,8 +216,10 @@ let haulerIdlingEmissions = calculateIdlingEmissions(1, vit)
 // Function to run the haul sequence for the given number of hauls
 function runHaulSequence(hauls, duration) {
   let currentHaul = 0;
+  const batchSize = (hauls >= 6 && hauls <= 9) ? 5 : hauls > 20 ? 10 : (hauls >= 10 && hauls <= 20) ? 5 : hauls;
 
-  function nextPart() {
+  function processBatch() {
+    let batchEnd = Math.min(currentHaul + batchSize, hauls);
     if (currentHaul < hauls) {
       let transferStationChecked = document.getElementById('transferStation').checked;
       let haulerDistance = parseFloat(document.getElementById("haulerDistance").value || 0);
@@ -155,36 +227,201 @@ function runHaulSequence(hauls, duration) {
       let transferStationDistance = parseFloat(document.getElementById("transferStationDistance").value || 0);
       let haulCost = parseFloat(document.getElementById('haulCost').value || 0);
 
-      // Hauler to Customer
+      // Calculate the number of hauls in the current batch
+      let haulsInCurrentBatch = batchEnd - currentHaul;
+
+      // Hauler to Customer (Simulate once for the batch)
       animateDotAlongPath('haulerToCustomer', duration, () => {
-        let haulerToCustomerEmissions = calculatePathEmissions(haulerDistance, Emissions.RunningCO2, false);
-        incrementEmissionsForPath(haulerToCustomerEmissions);
+        let batchRunningEmissions = haulsInCurrentBatch * haulerDistance * (Emissions.RunningCO2 * conversionFactor);
+        let batchIdlingEmissions = haulsInCurrentBatch * vit * (Emissions.IdleCO2 * conversionFactor);
+        incrementEmissionsForPath('haulerToCustomer', batchRunningEmissions, (batchIdlingEmissions / 3));
 
         // Determine the next destination based on transfer station usage
         let destinationPathId = transferStationChecked ? 'customerToTransfer' : 'customerToLandfill';
-        let destinationEmissions = transferStationChecked ? calculatePathEmissions(transferStationDistance, Emissions.RunningCO2, false) : calculatePathEmissions(landfillDistance, Emissions.RunningCO2, false);
-        updateHaulingCost(haulCost);
+        let destinationDistance = transferStationChecked ? transferStationDistance : landfillDistance;
+        let destinationRunningEmissions = haulsInCurrentBatch * destinationDistance * (Emissions.RunningCO2 * conversionFactor);
+        updateHaulingCost(haulCost * haulsInCurrentBatch);
 
-        // Customer to Next Destination (Transfer Station or Landfill)
+        // Customer to Next Destination (Transfer Station or Landfill) - Simulate once for the batch
         animateDotAlongPath(destinationPathId, duration, () => {
-          incrementEmissionsForPath(destinationEmissions);
+          incrementEmissionsForPath(destinationPathId, destinationRunningEmissions, (batchIdlingEmissions / 3));
           
-          // Reverse the animation for the return path
+          // Reverse the animation for the return path - Simulate once for the batch
           animateDotAlongPath(destinationPathId, duration, () => {
-            // Use the same emissions for the return path
-            incrementEmissionsForPath(destinationEmissions);
-            currentHaul++;
+            incrementEmissionsForPath('haulerToCustomer', destinationRunningEmissions, (batchIdlingEmissions / 3));
+            currentHaul = batchEnd; // Move to the end of the current batch
             if (currentHaul < hauls) {
-              nextPart();
+              // Delay before starting the next batch
+              setTimeout(processBatch, duration);
             }
-          }, true); // The 'true' flag indicates this is a return path
-        });
-      });
+          }, true, haulsInCurrentBatch); // Pass haulsInCurrentBatch for return path too
+        }, false, haulsInCurrentBatch); // Ensure haulsInCurrentBatch is passed here
+      }, false, haulsInCurrentBatch); // Pass the batch count as an argument
     }
   }
 
-  nextPart();
+  processBatch(); // Start processing the hauls in batches
 }
+
+// Function to run the SMT service sequence
+function runSMTSequence(compactibility, hauls, duration) {
+
+  let adjustedHauls = calculateSmashes(hauls, compactibility);
+  console.log('Adjusted Hauls with SMT:', adjustedHauls); 
+  let timesSmashed = getSMTSmashes(compactibility);
+  console.log('Times Smashed:', timesSmashed);
+
+
+  function animateSMTPath(currentHaul = 0) {
+    console.log('Animate Path Current Haul:', currentHaul);
+    if (currentHaul < adjustedHauls) {
+
+      let transferStationChecked = document.getElementById('transferStation').checked;
+      let haulerDistance = parseFloat(document.getElementById("haulerDistance").value || 0);
+      let landfillDistance = parseFloat(document.getElementById("landfillDistance").value || 0);
+      let transferStationDistance = parseFloat(document.getElementById("transferStationDistance").value || 0);
+      let haulCost = parseFloat(document.getElementById('haulCost').value || 0);
+      
+      let haulsWithSMT = calculateSmashes(hauls, compactibility);
+      console.log('Adjusted Hauls with SMT:', haulsWithSMT); 
+      
+      let defaultSMTDistance = 2;
+      let smtEmissions = calculateSMTPathEmissions(1, defaultSMTDistance); // Assuming calculateSMTPathEmissions & defaultSMTDistance are defined
+      let batchSMTEmissions = smtEmissions * timesSmashed;
+      // Run animation and update emissions for each SMT-optimized haul
+      animateDotAlongPath('smtToCustomer', duration, () => {
+        incrementEmissionsForPathWithSMT('smtToCustomer', batchSMTEmissions, 0);
+
+        // Proceed with the hauler path simulation
+        animateHaulerPath(currentHaul);
+      }, false, timesSmashed > 1 ? timesSmashed : undefined); // Pass timesSmashed for the dot text only if > 1
+    }
+  }
+
+  function animateHaulerPath(currentHaul) {
+    let haulerDistance = parseFloat(document.getElementById("haulerDistance").value || 0);
+    let landfillDistance = parseFloat(document.getElementById("landfillDistance").value || 0);
+    let transferStationDistance = parseFloat(document.getElementById("transferStationDistance").value || 0);
+    let transferStationChecked = document.getElementById('transferStation').checked;
+    let haulCost = parseFloat(document.getElementById('haulCost').value || 0);
+    let haulerIdlingEmissions = vit * (Emissions.IdleCO2 * conversionFactor); // Assuming 'vit' and 'CF' are correctly defined and applied
+    
+    // Hauler to Customer animation with batch information
+    animateDotAlongPath('haulerToCustomer', duration, () => {
+      let haulerRunningEmissions = haulerDistance * (Emissions.RunningCO2 * conversionFactor); // Ensure conversionFactor is applied if needed
+      incrementEmissionsForPathWithSMT('haulerToCustomer', haulerRunningEmissions, (haulerIdlingEmissions / 3));
+  
+      // Determine the next destination based on transfer station usage
+      let destinationPathId = transferStationChecked ? 'customerToTransfer' : 'customerToLandfill';
+      let destinationDistance = transferStationChecked ? transferStationDistance : landfillDistance;
+      let destinationRunningEmissions = destinationDistance * (Emissions.RunningCO2 * conversionFactor);
+      updateHaulingCostWithSMT(haulCost);
+  
+      // Customer to Next Destination (Transfer Station or Landfill) - Simulate once for the batch
+      animateDotAlongPath(destinationPathId, duration, () => {
+        incrementEmissionsForPathWithSMT(destinationPathId, destinationRunningEmissions, (haulerIdlingEmissions / 3));
+        
+        // Reverse the animation for the return path - Simulate once for the batch
+        animateDotAlongPath(destinationPathId, duration, () => {
+          incrementEmissionsForPathWithSMT('haulerToCustomer', destinationRunningEmissions, (haulerIdlingEmissions / 3));
+          if (currentHaul < adjustedHauls) {
+            setTimeout(() => animateSMTPath(currentHaul + 1), duration);
+          }
+        }, true);
+      }); 
+    }); 
+  }
+  
+  animateSMTPath();
+}  
+
+function calculateSMTPathEmissions(timesSmashed, defaultSMTDistance) {
+
+  const CF = 0.00220462; 
+  const ST = 0.083333333; 
+
+  let smtRunning = smtRunningEmissions(defaultSMTDistance, Emissions.SmashRunCO2, CF);
+  let smtIdling = smtIdlingEmissions(ST, Emissions.SmashIdleCO2, CF);
+
+  let smashingEmissions = calculateSmashingEmissions(timesSmashed, ST, Emissions.SmashCO2, CF);
+  let totalSMTEmissions = smtRunning + smtIdling + smashingEmissions;
+
+  console.log('Total SMT Emissions:', totalSMTEmissions);
+
+  return totalSMTEmissions; // Return total emissions for the SMT service
+}
+
+
+// Call this function when the SMT service is to be simulated
+document.getElementById("submitWithSMT").addEventListener("click", function (event) {
+  event.preventDefault();
+
+
+  // Get form values
+  let haulsPerWeek = parseFloat(document.getElementById("haulsPerWeek").value) || 0;
+  let landfillDistance = parseFloat(document.getElementById("landfillDistance").value) || 0;
+  let haulerDistance = parseFloat(document.getElementById("haulerDistance").value) || 0;
+  let compactibilityValue = document.getElementById('compactibility').value;
+  let haulCost = parseFloat(document.getElementById("haulCost").value) || 0;
+  let transferStationChecked = document.getElementById("transferStation").checked;
+  let transferStationDistance = parseFloat(document.getElementById("transferStationDistance").value) || 0;
+  const ST = 0.083333333; 
+  const CF = 0.00220462; 
+
+  const smashingEmissions = calculateSmashingEmissions(haulsPerWeek, ST, Emissions.SmashCO2, CF);
+  console.log(`Smashing Emissions: ${smashingEmissions.toFixed(2)} lbs/week`);
+
+  let totalHaulerDistWithLandfill = haulerDistance + landfillDistance;
+  let totalHaulerDistWithTransfer = haulerDistance + transferStationDistance;
+
+  let smtDistance = 2 
+  
+  runSMTSequence(compactibilityValue, haulsPerWeek, 2000); // Duration 2000 can be adjusted
+
+});
+
+// Function to calculate the number of smashes based on compactibility
+function calculateSmashes(haulsPerWeek, compactibility) {
+  let adjustedHauls;
+  if (compactibility === 'high') {
+    adjustedHauls = Math.ceil(haulsPerWeek * 0.2);
+  } else if (compactibility === 'medium') {
+    adjustedHauls = Math.ceil(haulsPerWeek * 0.3);
+  } else if (compactibility === 'low') {
+    adjustedHauls = Math.ceil(haulsPerWeek * 0.4);
+  }
+  return adjustedHauls;
+}
+
+function getSMTSmashes(compactibility){
+  let timesSmashed;
+  if(compactibility === 'high'){
+    timesSmashed = 3;
+  } else if (compactibility === 'medium'){
+    timesSmashed = 2;
+  } else {
+    timesSmashed = 1;
+  }
+  return timesSmashed;
+
+}
+function smtRunningEmissions(distance, emissionFactor, conversionFactor){
+  const emissions =  distance * (emissionFactor * conversionFactor);
+  return emissions;
+}
+
+function smtIdlingEmissions(smashingTime, emissionFactor, conversionFactor){
+  const emissions = smashingTime * (emissionFactor * conversionFactor)
+  return emissions;
+}
+
+function calculateSmashingEmissions(numberOfWasteHauls, smashingTime, emissionFactor, conversionFactor) {
+  const emissions = numberOfWasteHauls * smashingTime * (emissionFactor * 17) * conversionFactor;
+  return emissions;
+}
+
+
+
 function getPathWithRightAngle(startIconId, endIconId) {
   const startIcon = document.getElementById(startIconId);
   const endIcon = document.getElementById(endIconId);
@@ -207,32 +444,29 @@ function getPathWithRightAngle(startIconId, endIconId) {
   return pathData;
 }
 
+function getPathCoordinates(startIconId, endIconId) {
+  const startIcon = document.getElementById(startIconId);
+  const endIcon = document.getElementById(endIconId);
+
+  if (!startIcon || !endIcon) {
+    console.error(
+      `One or both elements with IDs "${startIconId}" or "${endIconId}" were not found.`
+    );
+    return null;
+  }
+  // Calculate the top-left corner positions of the icons
+  const startTopLeft = { x: startIcon.offsetLeft, y: startIcon.offsetTop };
+  const endTopLeft = { x: endIcon.offsetLeft, y: endIcon.offsetTop };
+
+  return {
+    startX: startTopLeft.x,
+    startY: startTopLeft.y,
+    endX: endTopLeft.x,
+    endY: endTopLeft.y,
+  };
+}
 
 document.addEventListener("DOMContentLoaded", function () {
-  
-  function getPathCoordinates(startIconId, endIconId) {
-    const startIcon = document.getElementById(startIconId);
-    const endIcon = document.getElementById(endIconId);
-
-    if (!startIcon || !endIcon) {
-      console.error(
-        `One or both elements with IDs "${startIconId}" or "${endIconId}" were not found.`
-      );
-      return null;
-    }
-    // Calculate the top-left corner positions of the icons
-    const startTopLeft = { x: startIcon.offsetLeft, y: startIcon.offsetTop };
-    console.log(startTopLeft);
-    const endTopLeft = { x: endIcon.offsetLeft, y: endIcon.offsetTop };
-    console.log(endTopLeft);
-
-    return {
-      startX: startTopLeft.x,
-      startY: startTopLeft.y,
-      endX: endTopLeft.x,
-      endY: endTopLeft.y,
-    };
-  }
 
   // Call this function when the page loads and also on window resize
   const haulerToCustomerPathCoordinates = getPathCoordinates(
@@ -304,15 +538,17 @@ document.addEventListener("DOMContentLoaded", function () {
       color: "green",
     },
   );
-  d3.select("#visualization-map")
+d3.select("#visualization-map")
   .selectAll("path")
   .data(pathData)
   .enter()
   .append("path")
-  .attr("d", d => getPathWithRightAngle(d.startIcon, d.endIcon)) // Generate path with right angle
+  .attr("d", d => getPathWithRightAngle(d.startIcon, d.endIcon))
   .attr("stroke", d => d.color)
-  .attr("fill", "none") // No fill for the paths
-  .attr("id", d => d.id);
+  .attr("fill", "none")
+  .attr("id", d => d.id)
+  .attr("endIcon", d => d.endIcon); // Set custom attribute here
+
 
 
   pathData.forEach((path) => {
@@ -520,6 +756,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
       runHaulSequence(haulsPerWeek, 2000); // Duration 2000 can be adjusted
   });
- /// animateDotAlongPath('haulerToCustomer', 2000, haulsPerWeek, Emissions.RunningCO2, false);
+   /// animateDotAlongPath('haulerToCustomer', 2000, haulsPerWeek, Emissions.RunningCO2, false);
 
 });
